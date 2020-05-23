@@ -30,7 +30,7 @@ class SqlsrvAdapter extends Connection
 	public function quote_name($string)
 	{
 		return $string[0] === '[' || $string[strlen($string) - 1] === ']' ?
-			$string : "[$string]";
+			$string : "$string";
 	}
 
 	// based on the implementation from the Zend Db adapter
@@ -59,18 +59,13 @@ class SqlsrvAdapter extends Connection
 	public function query_column_info($table)
 	{
 		$sql =
-			"SELECT c.COLUMN_NAME as field, c.DATA_TYPE as data_type, c.CHARACTER_MAXIMUM_LENGTH AS length, c.NUMERIC_PRECISION_RADIX AS radix, c.COLUMN_DEFAULT AS data_default, c.IS_NULLABLE AS nullable, " .
-				"COLUMNPROPERTY(OBJECT_ID(TABLE_NAME), c.COLUMN_NAME, 'IsIdentity') AS extra, " .
-				"(SELECT a.CONSTRAINT_TYPE " .
-				"FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS a, INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE b " .
-				"WHERE a.CONSTRAINT_TYPE='PRIMARY KEY' " .
-				"AND a.CONSTRAINT_NAME = b.CONSTRAINT_NAME " .
-				"AND a.TABLE_NAME = b.TABLE_NAME AND b.COLUMN_NAME = c.COLUMN_NAME) AS PK " .
-			"FROM INFORMATION_SCHEMA.COLUMNS c " .
-			"WHERE c.TABLE_NAME=?";
-
-		$values = array($table);
-		return $this->query($sql,$values);
+			"SELECT c.COLUMN_NAME as field, c.DATA_TYPE as data_type, c.CHARACTER_MAXIMUM_LENGTH AS length, c.NUMERIC_PRECISION_RADIX AS radix, c.COLUMN_DEFAULT AS data_default, c.IS_NULLABLE AS nullable, "
+			. "COLUMNPROPERTY(OBJECT_ID(TABLE_NAME), c.COLUMN_NAME, 'IsIdentity') AS extra, "
+			. "(SELECT TOP 1 a.CONSTRAINT_TYPE " . "FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS a, INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE b "
+			. "WHERE a.CONSTRAINT_TYPE='PRIMARY KEY' " . "AND a.CONSTRAINT_NAME = b.CONSTRAINT_NAME "
+			. "AND a.TABLE_NAME = b.TABLE_NAME AND b.COLUMN_NAME = c.COLUMN_NAME) AS PK "
+			. "FROM INFORMATION_SCHEMA.COLUMNS c " . "WHERE c.TABLE_NAME= '" . $table . "'";
+		return $this->query($sql);
 	}
 
 	public function query_for_tables()
